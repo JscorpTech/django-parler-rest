@@ -41,7 +41,7 @@ def find_version(*parts):
 
 
 setup(
-    name='django-parler-rest',
+    name='jst-parler-rest',
     version=find_version('parler_rest', '__init__.py'),
     license='Apache 2.0',
 
