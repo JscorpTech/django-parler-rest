@@ -10,6 +10,7 @@ from rest_framework import serializers
 from rest_framework.fields import SkipField
 from parler.models import TranslatableModelMixin, TranslatedFieldsModel
 from parler.utils.context import switch_language
+from django.conf import settings
 from django.utils.translation import get_language
 
 from parler_rest.utils import create_translated_fields_serializer
@@ -162,6 +163,10 @@ class TranslatedField(serializers.Field):
     Read-only field to expose a single object property in all it's languages.
     """
 
+    default_error_messages = {
+        "missing_language_code": "Missing language code.",
+    }
+
     def get_attribute(self, instance):
         # Instead of fetching the attribute with getattr() (that proxies to the Parler TranslatableField),
         # read the translation model directly to fetch all languages, and combine that into a dict.
@@ -184,10 +189,12 @@ class TranslatedField(serializers.Field):
 
     # pylint: disable=no-self-use
     def to_internal_value(self, data):
+        if settings.LANGUAGE_CODE not in data:
+            self.fail("missing_language_code")
         return data
 
 
-class AutoTranslatedField(serializers.Field):
+class AutoTranslatedField(TranslatedField):
     """
     Read-only field to expose a single object property in the current language.
     """
@@ -196,12 +203,6 @@ class AutoTranslatedField(serializers.Field):
         return instance.safe_translation_getter(
             self.source, language_code=get_language()
         )
-
-    def to_representation(self, value):
-        return value
-
-    def to_internal_value(self, data):
-        return data
 
 
 class TranslatedAbsoluteUrlField(serializers.ReadOnlyField):
